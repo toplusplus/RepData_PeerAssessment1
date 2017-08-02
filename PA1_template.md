@@ -96,7 +96,7 @@ steps taken per day.
           ylab = "Frequency", 
           main = "Histogram: Total number of steps taken per day")
 
-![](figure/plot-1.png)
+![](figure/plot_1.png)
 
 It seems like our mate is a little lazy! We are not, let's move onto
 some *central tendency* measurements.
@@ -141,7 +141,7 @@ of steps taken, averaged across all days (y-axis).
            ylab("Average number of steps taken") +
            ggtitle("Time Series: Average number of steps taken")
 
-![](figure/plot-2.png)
+![](figure/plot_2.png)
 
 We can see a **peak** between the intervals 500 and 1000. This peak
 represent the **maximum number of steps taken on average across all the
@@ -214,7 +214,7 @@ analysis using the new dataset, the one with *NAs* filled.
           ylab = "Frequency", 
           main = "Histogram: Total number of steps taken per day")
 
-![](figure/plot-3.png)
+![](figure/plot_3.png)
 
 It looks like our mate is not lazy at all! Our judgement may have been
 biased by missing values. What a shame!
@@ -269,7 +269,7 @@ weekday days or weekend days (y-axis).
            ylab("Average number of steps taken") +
            ggtitle("Time Series: Average number of steps taken")
 
-![](figure/plot-4.png)
+![](figure/plot_4.png)
 
 We can see how in several intervals the average number of steps taken
 **increase**.  
