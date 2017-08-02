@@ -51,13 +51,26 @@ Let's start by loading the dataset and taking a look at its structure.
     str(data)
 ```
 
+```
+    ## 'data.frame':    17568 obs. of  3 variables:
+    ##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+    ##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 As you can see, the **date** column is a *Factor* vector. Better we
 transform it into a *Date* vector.
 
 ```r
     data$date <- as.Date(data$date)
     str(data)
-```    
+```
+```
+    ## 'data.frame':    17568 obs. of  3 variables:
+    ##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+    ##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+    ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
 
 It can be noticed that at least the first ten entries of **steps** are
 missing. It would be interesting look at the proportion of *NAs* but by
@@ -71,7 +84,13 @@ taken per day. *tapply* looks like the right tool for this.
 ```r
     perday <- tapply(data$steps, data$date, FUN = sum, na.rm = TRUE)
     str(perday)
-```    
+```
+
+```
+    ##  int [1:61(1d)] 0 126 11352 12116 13294 15420 11015 0 12811 9900 ...
+    ##  - attr(*, "dimnames")=List of 1
+    ##   ..$ : chr [1:61] "2012-10-01" "2012-10-02" "2012-10-03" "2012-10-04" ...
+```
 
 Let's visualize it. We'll make a **histogram** of the total number of
 steps taken per day.
@@ -94,10 +113,19 @@ some *central tendency* measurements.
 ```r
     mean(perday)
 ```
+
+```
+    ## [1] 9354.23
+```
+
 ```r
     median(perday)
 ```
-  
+
+```
+    ## [1] 10395
+```
+
 So, answering the question, the **mean** total number of steps taken per
 day is **9354.23**.  
 We're ready for the next question.
@@ -112,6 +140,16 @@ To answer that we must to calculate the average steps taken by interval.
     head(avg)
 ```
 
+```
+    ##   interval     steps
+    ## 1        0 1.7169811
+    ## 2        5 0.3396226
+    ## 3       10 0.1320755
+    ## 4       15 0.1509434
+    ## 5       20 0.0754717
+    ## 6       25 2.0943396
+```
+
 To visualize the average daily activity pattern, we'll make a **time
 series plot** of the 5-minute interval (x-axis) and the average number
 of steps taken, averaged across all days (y-axis).
@@ -124,7 +162,6 @@ of steps taken, averaged across all days (y-axis).
            ylab("Average number of steps taken") +
            ggtitle("Time Series: Average number of steps taken")
 ```
-
 ![time series plot](figure/plot_2.png)
 
 We can see a **peak** between the intervals 500 and 1000. This peak
@@ -135,6 +172,10 @@ interval contains this peak.
 
 ```r
     avg[which.max(avg$steps), 'interval']
+```
+
+```
+    ## [1] 835
 ```
 
 The interval **835** contains the maximum number of steps taken on
@@ -150,7 +191,11 @@ Let's calculate the total number of missing values in the dataset.
 ```r
     sum(is.na(data$steps))
 ```
-    
+
+```
+    ## [1] 2304
+```
+
 We report **2304** missing values, which represents **13.11%** of the
 data.  
 This percentage is highly enough to be considered. We'll must devise a
@@ -175,10 +220,20 @@ Let's code a **fill** function that will allow us to apply our strategy.
 Now we'll create a new dataset that is equal to the original but with
 the missing data filled in.
 
-```r
+```f
     newdata <- data
     newdata$steps <- mapply(fill, newdata$steps, newdata$interval)
     head(newdata)
+```
+
+```
+    ##       steps       date interval
+    ## 1 1.7169811 2012-10-01        0
+    ## 2 0.3396226 2012-10-01        5
+    ## 3 0.1320755 2012-10-01       10
+    ## 4 0.1509434 2012-10-01       15
+    ## 5 0.0754717 2012-10-01       20
+    ## 6 2.0943396 2012-10-01       25
 ```
 
 To evaluate the impact of imputing missing data on the estimates of the
@@ -203,11 +258,19 @@ biased by missing values. What a shame!
 ```r
     mean(perday)
 ```
-    
+
+```
+    ## [1] 10766.19
+```
+
 ```r
     median(perday)
 ```
-    
+
+```
+    ## [1] 10766.19
+```
+
 Indeed, **the mean total number of steps taken per day** increase from
 **9354.23** to **10766.19**.  
 Once the *NAs* issue was solved, we'll move onto the next and final
@@ -224,7 +287,17 @@ We'll add a new factor variable in the dataset with two levels
                           'weekend', 'weekday')
     head(newdata)
 ```
-   
+
+```
+    ##       steps       date interval     day
+    ## 1 1.7169811 2012-10-01        0 weekday
+    ## 2 0.3396226 2012-10-01        5 weekday
+    ## 3 0.1320755 2012-10-01       10 weekday
+    ## 4 0.1509434 2012-10-01       15 weekday
+    ## 5 0.0754717 2012-10-01       20 weekday
+    ## 6 2.0943396 2012-10-01       25 weekday
+```
+
 Now we are ready to answer the question in a visual way. Let's make a
 **panel plot containing two time series plots** of the 5-minute interval
 (x-axis) and the average number of steps taken, averaged across all
@@ -248,8 +321,7 @@ We can see how in several intervals the average number of steps taken
 **increase**.  
 At first sight, it seems that our mate is more active during weekends.
 
-Conclusions
------------
+## Conclusions
 
 We saw how useful are **histograms** and **time series plots** to get
 some insights while performing exploratory analysis with data collected
