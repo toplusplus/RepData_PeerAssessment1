@@ -1,0 +1,209 @@
+---
+title: "Lifelogging"
+author: '@toplusplus'
+date: "August 1, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+There is an increasing use of technology to collect data about oneself. Smartphone apps, GPS devices, physical activity trackers, all of these technologies allow individuals to track aspects of their daily lives like daytime activity, number of steps, amount of sleep, heart rate and even mood. People who track themselves regularly think that data collected may help them take action to improve their lives. See more at: [Quantified Self Movement](https://en.wikipedia.org/wiki/Quantified_Self).
+
+This document expose an **exploratory data analysis** using data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. 
+
+## About the data
+
+The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+**Dataset**: [Activity monitoring data [52K]](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip)
+
+The variables included in this dataset are:
+
+- **steps**: Number of steps taking in a 5-minute interval (missing values are coded as **NA**).
+- **date**: The date on which the measurement was taken in **YYYY-MM-DD** format.
+- **interval**: Identifier for the **5-minute** interval in which measurement was taken.
+
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of **17,568** observations in this dataset.
+
+<p align="center"> 
+<img src="https://xmnuz23762.i.lithium.com/t5/image/serverpage/image-id/29301i0133060A68A0D056?v=1.0">
+</p>
+
+## Here we go!
+
+Let's start by loading the dataset and taking a look at its structure.
+
+```{r}
+data <- read.csv(unzip("activity.zip"))
+str(data)
+```
+
+As you can see, the **date** column is a *Factor* vector. Better we transform it into a *Date* vector. 
+
+```{r}
+data$date <- as.Date(data$date)
+str(data)
+```
+
+It can be noticed that at least the first ten entries of **steps** are missing. It would be interesting look at the proportion of *NAs* but by now we'll keep the focus on answer some questions.
+
+## What is mean total number of steps taken per day?
+
+To answer that, we need to calculate first the total number of steps taken per day. *tapply* looks like the right tool for this. 
+
+```{r}
+perday <- tapply(data$steps, data$date, FUN = sum, na.rm = TRUE)
+str(perday)
+```
+
+Let's visualize it. We'll make a **histogram** of the total number of steps taken per day.
+
+```{r firstplot}
+library(ggplot2)
+
+qplot(perday,
+      binwidth = 1000,
+      xlab = "Total number of steps taken per day", 
+      ylab = "Frequency", 
+      main = "Histogram: Total number of steps taken per day")
+```
+
+It seems like our mate is a little lazy! We are not, let's move onto some *central tendency* measurements.
+
+```{r}
+mean(perday)
+median(perday)
+```
+
+So, answering the question, the **mean** total number of steps taken per day is **`r round(mean(perday),2)`**.  
+We're ready for the next question. 
+
+## What is the average daily activity pattern?
+
+To answer that we must to calculate the average steps taken by interval. *aggregate* will do the job. 
+
+```{r}
+avg <- aggregate(steps ~ interval, data, mean, na.rm = TRUE)
+head(avg)
+```
+
+To visualize the average daily activity pattern, we'll make a **time series plot** of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+
+```{r secondplot}
+ggplot(avg, 
+       aes(x = interval, y = steps)) +
+       geom_line() +
+       xlab("5min Interval") +
+       ylab("Average number of steps taken") +
+       ggtitle("Time Series: Average number of steps taken")
+```
+
+We can see a **peak** between the intervals 500 and 1000. This peak represent the **maximum number of steps taken on average across all the days**.  
+Since this information is critical, we'll find which exactly 5-minute interval contains this peak. 
+
+```{r}
+avg[which.max(avg$steps), 'interval']
+```
+
+The interval **`r avg[which.max(avg$steps), 'interval']`** contains the maximum number of steps taken on average across all the days.  
+Now we'll back to the *NAs* issue. 
+
+## Dealing with missing values
+
+Since **missing values may introduce bias** into some calculations or summaries of the data, we better consider them into our analysis.  
+Let's calculate the total number of missing values in the dataset.
+
+```{r}
+sum(is.na(data$steps))
+
+```
+
+We report **`r sum(is.na(data$steps))`** missing values, which represents **`r round(mean(is.na(data$steps))*100,2)`%** of the data.  
+This percentage is highly enough to be considered. We'll must devise a strategy for filling in all of the missing values in the dataset.
+
+A **simple strategy** could be replace *NAs* with the mean value of its 5-minute interval.  
+Let's code a **fill** function that will allow us to apply our strategy. 
+
+```{r}
+fill <- function(steps, interval) {
+  filled <- NULL
+  if (!is.na(steps))
+    filled <- c(steps) 
+  else
+    filled <- (avg[avg$interval == interval, 'steps'])
+  
+  filled
+}
+```
+
+Now we'll create a new dataset that is equal to the original but with the missing data filled in.
+
+```{r}
+newdata <- data
+newdata$steps <- mapply(fill, newdata$steps, newdata$interval)
+head(newdata)
+```
+
+To evaluate the impact of imputing missing data on the estimates of the total daily number of steps, we'll repeat the first part of this analysis using the new dataset, the one with *NAs* filled. 
+
+```{r thirdplot}
+perday <- tapply(newdata$steps, newdata$date, FUN = sum, na.rm = TRUE)
+
+qplot(perday,
+      binwidth = 1000,
+      xlab = "Total number of steps taken per day", 
+      ylab = "Frequency", 
+      main = "Histogram: Total number of steps taken per day")
+```
+
+It looks like our mate is not lazy at all! Our judgement may have been biased by missing values. What a shame!
+
+```{r}
+mean(perday)
+median(perday)
+```
+
+Indeed, **the mean total number of steps taken per day** increase from **9354.23** to **10766.19**.  
+Once the *NAs* issue was solved, we'll move onto the next and final question.  
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+We'll add a new factor variable in the dataset with two levels (“weekday” and 
+“weekend”) indicating whether a given date is a **weekday** or **weekend** day.
+
+felse(as.POSIXlt(activityDataImputed$date)$wday %in% c(0,6), 'weekend', 'weekday')
+
+```{r}
+newdata$day <- ifelse(as.POSIXlt(newdata$date)$wday %in% c(0,6),
+                      'weekend', 'weekday')
+head(newdata)
+```
+
+Now we are ready to answer the question in a visual way. Let's make a **panel plot containing two time series plots** of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all
+weekday days or weekend days (y-axis).
+
+```{r fourthplot}
+avg <- aggregate(steps ~ interval + day, newdata, mean)
+
+ggplot(avg, 
+       aes(interval, steps)) +
+       geom_line() +
+       facet_grid(day ~ .)  +
+       xlab("5min Interval") +
+       ylab("Average number of steps taken") +
+       ggtitle("Time Series: Average number of steps taken")
+```
+
+We can see how in several intervals the average number of steps taken **increase**.  
+At first sight, it seems that our mate is more active during weekends. 
+
+## Conclusions
+
+We saw how useful are **histograms** and **time series plots** to get some insights while performing exploratory analysis with data collected by personal activity monitoring devices.  
+
+Since **missing values could bias our analysis**, they deserve special attention. 
+
