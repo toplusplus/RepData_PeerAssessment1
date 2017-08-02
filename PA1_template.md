@@ -1,6 +1,6 @@
 # Lifelogging
-### @toplusplus
-### August 1, 2017
+@toplusplus  
+August 1, 2017
 
 Overview
 --------
@@ -42,7 +42,8 @@ are a total of **17,568** observations in this dataset.
 
 <p align="center">
 <img src="https://xmnuz23762.i.lithium.com/t5/image/serverpage/image-id/29301i0133060A68A0D056?v=1.0">
-</p>
+</p>  
+
 Here we go!
 -----------
 
